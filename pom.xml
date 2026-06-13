@@ -16,6 +16,13 @@
   <description>ScaleCube SBE Weaver — generates typed Java service APIs from SBE schemas</description>
   <url>https://github.com/scalecube/scalecube-sbe-weaver</url>
 
+  <scm>
+    <url>https://github.com/scalecube/scalecube-sbe-weaver</url>
+    <connection>scm:git:https://github.com/scalecube/scalecube-sbe-weaver.git</connection>
+    <developerConnection>scm:git:https://github.com/scalecube/scalecube-sbe-weaver.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
   <modules>
     <module>generator</module>
     <module>sdk</module>
