@@ -1,13 +1,14 @@
 name: Release CI
-
 on:
   release:
     types: [released]
-
 jobs:
   build:
     name: Release CI
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,7 +46,7 @@ jobs:
             -Darguments="-DskipTests=true"
           echo release_tag=$(git describe --tags --abbrev=0) >> $GITHUB_OUTPUT
       - name: Perform release to GitHub Packages
-        run: mvn -B release:perform -Pdeploy2Github -Darguments="-DskipTests=true -Pdeploy2Github"
+        run: mvn -B release:perform -DlocalCheckout=true -Pdeploy2Github -Darguments="-DskipTests=true -Pdeploy2Github"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ secrets.GITHUB_REPOSITORY }}
