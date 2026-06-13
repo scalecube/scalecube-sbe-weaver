@@ -40,6 +40,8 @@
     <build-helper-maven-plugin.version>3.5.0</build-helper-maven-plugin.version>
 
     <checkstyle.suppressions.location>${maven.multiModuleProjectDirectory}/checkstyle-suppressions.xml</checkstyle.suppressions.location>
+
+    <distributionManagement.url>https://maven.pkg.github.com/scalecube/scalecube-sbe-weaver</distributionManagement.url>
   </properties>
 
   <dependencyManagement>
