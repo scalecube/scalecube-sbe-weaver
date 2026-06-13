@@ -32,7 +32,7 @@
   <scm>
     <url>https://github.com/scalecube/scalecube-sbe-weaver</url>
     <connection>scm:git:git://github.com/scalecube/scalecube-sbe-weaver.git</connection>
-    <developerConnection>scm:git:ssh://github.com/scalecube/scalecube-sbe-weaver.git</developerConnection>
+    <developerConnection>scm:git:https://github.com/scalecube/scalecube-sbe-weaver.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
 
