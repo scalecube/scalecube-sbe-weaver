@@ -1,5 +1,7 @@
 # scalecube-sbe-weaver
 
+> The SDK Weaver will tailor the testing SDK for you!!
+>
 > Generate a clean, typed Java SDK from an SBE schema and a YAML service descriptor.
 > No encoders, decoders, or byte buffers ever appear in your testing code. abstract the transport details from your business logic
 > Give it YAML + your encoders jar and the Weaver will code generate the SDK just plug the transport.
