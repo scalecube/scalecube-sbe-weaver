@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<suppressions>
+  <!-- JavaEmitter builds Java source as string literals; line-length rules don't apply -->
+  <suppress checks="LineLength" files="JavaEmitter\.java"/>
+  <!-- Internal generator classes — no public API Javadoc required -->
+  <suppress checks="MissingJavadocType" files="\.java"/>
+  <suppress checks="MissingJavadocMethod" files="\.java"/>
+  <suppress checks="SummaryJavadoc" files="\.java"/>
+  <!-- Variable placement in complex inspection logic is intentional -->
+  <suppress checks="VariableDeclarationUsageDistance" files="\.java"/>
+</suppressions>

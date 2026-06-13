@@ -1,0 +1,34 @@
+service: CalendarApi
+package: com.example.exchange.api
+
+operations:
+  - name: createCalendar
+    command: CreateCalendarCommand
+    reply:   CalendarCreatedEvent
+    onError: CreateCalendarFailedEvent
+    style:   requestOne
+    errorVariants:
+      - name: createCalendarUnsuccessfully
+        style: callbackError
+      - name: createCalendarUnsuccessfullyWithContext
+        style: callbackErrorWithRequest
+
+  - name: updateCalendar
+    command: UpdateCalendarCommand
+    reply:   CalendarUpdatedEvent
+    style:   fireAndForget
+
+  - name: runCalendarEndOfDay
+    command: RunCalendarEndOfDayCommand
+    reply:   CalendarEndOfDayEvent
+    style:   fireAndForget
+
+  - name: subscribeCalendarEvents
+    topic: calendar.created
+    event: CalendarCreatedEvent
+    style: subscription
+
+  - name: subscribeCalendarUpdates
+    topic: calendar.updated
+    event: CalendarUpdatedEvent
+    style: subscription

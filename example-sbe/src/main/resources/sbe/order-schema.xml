@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Generic OrderService SBE schema — showcases all scalecube-sbe-weaver operation styles:
+    · requestOne with callbackErrorWithRequest  (placeOrder)
+    · requestOne with callbackError             (cancelOrder)
+    · requestOne without error callback         (modifyOrder)
+    · subscription — three event types on one topic   (order.events)
+    · fireAndForget                             (heartbeat)
+    · requestMany — send command, receive Flux  (getOrderHistory)
+-->
+<sbe:messageSchema xmlns:sbe="http://fixprotocol.io/2016/sbe"
+    package="com.example.sbe"
+    id="99"
+    version="0"
+    semanticVersion="5.2"
+    description="Generic Order Service — SBE schema for scalecube-sbe-weaver demo">
+
+  <types>
+
+    <composite name="messageHeader" description="Standard SBE message framing header">
+      <type name="blockLength" primitiveType="uint16"/>
+      <type name="templateId" primitiveType="uint16"/>
+      <type name="schemaId"   primitiveType="uint16"/>
+      <type name="version"    primitiveType="uint16"/>
+    </composite>
+
+    <composite name="groupSizeEncoding" description="Repeating group dimensions">
+      <type name="blockLength" primitiveType="uint16"/>
+      <type name="numInGroup"  primitiveType="uint16"/>
+    </composite>
+
+    <composite name="varStringEncoding" description="Variable-length UTF-8 string">
+      <type name="length"  primitiveType="uint32" maxValue="1073741824"/>
+      <type name="varData" primitiveType="uint8"  length="0" characterEncoding="UTF-8"/>
+    </composite>
+
+    <enum name="Side" encodingType="uint8" description="Order side">
+      <validValue name="Buy">0</validValue>
+      <validValue name="Sell">1</validValue>
+    </enum>
+
+    <enum name="OrderStatus" encodingType="uint8" description="Order lifecycle state">
+      <validValue name="Active">0</validValue>
+      <validValue name="Filled">1</validValue>
+      <validValue name="Cancelled">2</validValue>
+      <validValue name="PartiallyFilled">3</validValue>
+    </enum>
+
+    <enum name="TimeInForce" encodingType="uint8">
+      <validValue name="GoodTillCancel">0</validValue>
+      <validValue name="ImmediateOrCancel">1</validValue>
+      <validValue name="FillOrKill">2</validValue>
+    </enum>
+
+  </types>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       PlaceOrder — blockingAndAsync + callbackErrorWithRequest
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <message name="PlaceOrderRequest" id="1" description="Submit a new order to the exchange">
+    <field name="clientOrderId" id="1" type="uint64"/>
+    <field name="instrumentId"  id="2" type="uint32"/>
+    <field name="price"         id="3" type="int64"
+           description="Fixed-point price: value × 10^4"/>
+    <field name="quantity"      id="4" type="uint64"/>
+    <field name="side"          id="5" type="Side"/>
+    <field name="timeInForce"   id="6" type="TimeInForce"/>
+  </message>
+
+  <message name="PlaceOrderResponse" id="2" description="Order accepted by the matching engine">
+    <field name="orderId"       id="1" type="uint64"/>
+    <field name="clientOrderId" id="2" type="uint64"/>
+    <field name="status"        id="3" type="OrderStatus"/>
+  </message>
+
+  <message name="PlaceOrderFailed" id="3" description="Order rejected with error details">
+    <field name="clientOrderId" id="1" type="uint64"/>
+    <field name="errorCode"     id="2" type="uint32"/>
+    <data  name="errorMessage"  id="3" type="varStringEncoding"/>
+  </message>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       CancelOrder — blockingAndAsync + callbackError (no request ctx)
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <message name="CancelOrderRequest" id="4" description="Request to cancel an open order">
+    <field name="orderId"      id="1" type="uint64"/>
+    <field name="instrumentId" id="2" type="uint32"/>
+  </message>
+
+  <message name="CancelOrderResponse" id="5" description="Order successfully cancelled">
+    <field name="orderId" id="1" type="uint64"/>
+    <field name="status"  id="2" type="OrderStatus"/>
+  </message>
+
+  <message name="CancelOrderFailed" id="6" description="Cancel request rejected">
+    <field name="orderId"     id="1" type="uint64"/>
+    <field name="errorCode"   id="2" type="uint32"/>
+    <data  name="errorMessage" id="3" type="varStringEncoding"/>
+  </message>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       ModifyOrder — blockingAndAsync, no error callback
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <message name="ModifyOrderRequest" id="7" description="Adjust price or quantity of an open order">
+    <field name="orderId"     id="1" type="uint64"/>
+    <field name="newPrice"    id="2" type="int64"/>
+    <field name="newQuantity" id="3" type="uint64"/>
+  </message>
+
+  <message name="ModifyOrderResponse" id="8" description="Modification acknowledged">
+    <field name="orderId" id="1" type="uint64"/>
+    <field name="status"  id="2" type="OrderStatus"/>
+  </message>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       Subscription events — all published on topic "order.events"
+       (demonstrates per-templateId filtering in generated subscribe methods)
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <message name="OrderPlaced" id="9" description="A new order entered the book">
+    <field name="orderId"      id="1" type="uint64"/>
+    <field name="instrumentId" id="2" type="uint32"/>
+    <field name="price"        id="3" type="int64"/>
+    <field name="quantity"     id="4" type="uint64"/>
+    <field name="side"         id="5" type="Side"/>
+  </message>
+
+  <message name="OrderCancelled" id="10" description="An order was removed from the book">
+    <field name="orderId"      id="1" type="uint64"/>
+    <field name="instrumentId" id="2" type="uint32"/>
+  </message>
+
+  <message name="OrderExecuted" id="11" description="An order was (partially) filled">
+    <field name="orderId"           id="1" type="uint64"/>
+    <field name="executedPrice"     id="2" type="int64"/>
+    <field name="executedQuantity"  id="3" type="uint64"/>
+    <field name="remainingQuantity" id="4" type="uint64"/>
+    <field name="status"            id="5" type="OrderStatus"/>
+  </message>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       Heartbeat — fire-and-forget (no reply expected)
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <message name="Heartbeat" id="12" description="Periodic liveness signal from the client">
+    <field name="timestamp"      id="1" type="uint64"/>
+    <field name="sequenceNumber" id="2" type="uint64"/>
+  </message>
+
+       GetOrderHistory — requestMany (send command, receive stream of entries)
+
+  <message name="GetOrderHistoryRequest" id="13" description="Request historical orders for an instrument">
+    <field name="instrumentId" id="1" type="uint32"/>
+    <field name="maxEntries"   id="2" type="uint32"/>
+  </message>
+
+  <message name="OrderHistoryEntry" id="14" description="One order record in the history stream">
+    <field name="orderId"  id="1" type="uint64"/>
+    <field name="price"    id="2" type="int64"/>
+    <field name="quantity" id="3" type="uint64"/>
+    <field name="side"     id="4" type="Side"/>
+    <field name="status"   id="5" type="OrderStatus"/>
+  </message>
+
+       SubscribeOrdersByInstrument — subscription with command (register filter, then receive push events)
+
+  <message name="SubscribeOrdersRequest" id="15" description="Register to receive order events for a specific instrument">
+    <field name="instrumentId" id="1" type="uint32"/>
+  </message>
+
+</sbe:messageSchema>

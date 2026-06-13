@@ -1,0 +1,66 @@
+# Generic OrderService — demonstrates every scalecube-sbe-weaver operation style.
+#
+# Operations:
+#   placeOrder       — requestOne + callbackErrorWithRequest (BiConsumer<Request, Error>)
+#   cancelOrder      — requestOne + callbackError            (Consumer<Error>)
+#   modifyOrder      — requestOne, no error callback
+#   subscribe*       — subscription (3 events on topic "order.events", tests templateId filtering)
+#   sendHeartbeat    — fireAndForget
+#   getOrderHistory  — requestMany (send command, receive Flux of entries)
+
+service: OrderApi
+package: com.example.order.api
+operations:
+
+  - name: placeOrder
+    command: PlaceOrderRequest
+    reply:   PlaceOrderResponse
+    onError: PlaceOrderFailed
+    style:   requestOne
+    errorVariants:
+      - name:  placeOrderUnsuccessfully
+        style: callbackErrorWithRequest
+
+  - name: cancelOrder
+    command: CancelOrderRequest
+    reply:   CancelOrderResponse
+    onError: CancelOrderFailed
+    style:   requestOne
+    errorVariants:
+      - name:  cancelOrderUnsuccessfully
+        style: callbackError
+
+  - name: modifyOrder
+    command: ModifyOrderRequest
+    reply:   ModifyOrderResponse
+    style:   requestOne
+
+  - name:  subscribeOrderPlaced
+    topic: order.events
+    event: OrderPlaced
+    style: subscription
+
+  - name:  subscribeOrderCancelled
+    topic: order.events
+    event: OrderCancelled
+    style: subscription
+
+  - name:  subscribeOrderExecuted
+    topic: order.events
+    event: OrderExecuted
+    style: subscription
+
+  - name:    sendHeartbeat
+    command: Heartbeat
+    style:   fireAndForget
+
+  - name:    getOrderHistory
+    command: GetOrderHistoryRequest
+    event:   OrderHistoryEntry
+    style:   requestMany
+
+  - name:    subscribeOrdersByInstrument
+    command: SubscribeOrdersRequest
+    topic:   order.events
+    event:   OrderPlaced
+    style:   subscription

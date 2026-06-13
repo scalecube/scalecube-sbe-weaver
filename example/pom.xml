@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.scalecube</groupId>
+    <artifactId>scalecube-sbe-weaver</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>scalecube-sbe-weaver-example</artifactId>
+  <name>scalecube-sbe-weaver-example</name>
+  <description>
+    End-user example: owns the SBE schema and service YAML, runs generation,
+    and implements an application service against the generated API.
+    No SBE knowledge required in application code.
+  </description>
+
+  <properties>
+    <checkstyle.skip>true</checkstyle.skip>
+    <maven.deploy.skip>true</maven.deploy.skip>
+    <!-- Root package prefix to scan for SBE encoder classes in example-sbe -->
+    <sbe.root.package>com.example.sbe</sbe.root.package>
+  </properties>
+
+  <dependencies>
+    <!-- SDK runtime (Transport, SdkException) — the only non-generated dep -->
+    <dependency>
+      <groupId>io.scalecube</groupId>
+      <artifactId>scalecube-sbe-weaver-sdk</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <!-- generator on classpath at build time for the exec:java invocation -->
+    <dependency>
+      <groupId>io.scalecube</groupId>
+      <artifactId>scalecube-sbe-weaver-generator</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <!-- Generic SBE codecs — encoder/decoder classes inspected at SDK generation time -->
+    <dependency>
+      <groupId>io.scalecube</groupId>
+      <artifactId>scalecube-sbe-weaver-example-sbe</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <!-- Generate SDK public types + mappers + API from service YAMLs.
+           The exchange SBE encoder classes are resolved from the
+           io.exberry:market-service-api-codegen JAR already on the classpath. -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-sdk-sources</id>
+            <phase>generate-sources</phase>
+            <goals><goal>java</goal></goals>
+            <configuration>
+              <mainClass>io.scalecube.sbe.codegen.generator.SdkGenerator</mainClass>
+              <arguments>
+                <argument>${sbe.root.package}</argument>
+                <argument>${project.basedir}/src/main/resources</argument>
+                <argument>${project.build.directory}/generated-sources/sdk</argument>
+              </arguments>
+              <additionalClasspathElements>
+                <additionalClasspathElement>${project.basedir}/../generator/target/classes</additionalClasspathElement>
+                <additionalClasspathElement>${project.basedir}/../example-sbe/target/classes</additionalClasspathElement>
+                <additionalClasspathElement>${settings.localRepository}/org/yaml/snakeyaml/${snakeyaml.version}/snakeyaml-${snakeyaml.version}.jar</additionalClasspathElement>
+                <additionalClasspathElement>${settings.localRepository}/org/agrona/agrona/${agrona.version}/agrona-${agrona.version}.jar</additionalClasspathElement>
+              </additionalClasspathElements>
+              <includeProjectDependencies>false</includeProjectDependencies>
+              <includePluginDependencies>false</includePluginDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Add generated SDK source dir to the compile source root -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>add-generated-sources</id>
+            <phase>generate-sources</phase>
+            <goals><goal>add-source</goal></goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/sdk</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>--add-opens java.base/jdk.internal.misc=ALL-UNNAMED</argLine>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+</project>

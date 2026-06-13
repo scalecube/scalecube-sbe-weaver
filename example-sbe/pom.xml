@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.scalecube</groupId>
+    <artifactId>scalecube-sbe-weaver</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>scalecube-sbe-weaver-example-sbe</artifactId>
+  <name>scalecube-sbe-weaver-example-sbe</name>
+  <description>
+    Generic OrderService SBE schema for the scalecube-sbe-weaver demo.
+    Runs sbe-tool in generate-sources, compiles the codecs, and packages them as
+    a JAR that the example module loads at SDK-generation time.
+  </description>
+
+  <properties>
+    <checkstyle.skip>true</checkstyle.skip>
+    <maven.deploy.skip>true</maven.deploy.skip>
+  </properties>
+
+  <dependencies>
+    <!-- SBE-generated code references agrona buffer types at compile time -->
+    <dependency>
+      <groupId>org.agrona</groupId>
+      <artifactId>agrona</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <!-- Run sbe-tool to generate Java codec classes from the XML schema -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-sbe-codecs</id>
+            <phase>generate-sources</phase>
+            <goals><goal>java</goal></goals>
+            <configuration>
+              <mainClass>uk.co.real_logic.sbe.SbeTool</mainClass>
+              <systemProperties>
+                <systemProperty>
+                  <key>sbe.output.dir</key>
+                  <value>${project.build.directory}/generated-sources/sbe</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>sbe.java.generate.interfaces</key>
+                  <value>false</value>
+                </systemProperty>
+              </systemProperties>
+              <arguments>
+                <argument>${project.basedir}/src/main/resources/sbe/order-schema.xml</argument>
+              </arguments>
+              <includeProjectDependencies>false</includeProjectDependencies>
+              <includePluginDependencies>true</includePluginDependencies>
+            </configuration>
+          </execution>
+        </executions>
+        <!-- sbe-tool (and its transitive dep agrona) on the classpath for exec:java -->
+        <dependencies>
+          <dependency>
+            <groupId>uk.co.real-logic</groupId>
+            <artifactId>sbe-tool</artifactId>
+            <version>${sbe.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+
+      <!-- Add generated sources dir to compile roots -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>add-sbe-sources</id>
+            <phase>generate-sources</phase>
+            <goals><goal>add-source</goal></goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/sbe</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
+</project>
