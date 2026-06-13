@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>scalecube-sbe-weaver</artifactId>
-  <version>0.8.2-SNAPSHOT</version>
+  <version>0.8.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>scalecube-sbe-weaver</name>
